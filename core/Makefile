@@ -218,7 +218,9 @@ system_prop_file := $(TARGET_SYSTEM_PROP)
 else
 system_prop_file := $(wildcard $(TARGET_DEVICE_DIR)/system.prop)
 endif
+
 $(intermediate_system_build_prop): $(BUILDINFO_SH) $(INTERNAL_BUILD_ID_MAKEFILE) $(BUILD_SYSTEM)/version_defaults.mk $(system_prop_file) $(INSTALLED_ANDROID_INFO_TXT_TARGET)
+
 	@echo Target buildinfo: $@
 	@mkdir -p $(dir $@)
 	$(hide) echo > $@
@@ -232,7 +234,7 @@ endif
 	$(hide) TARGET_BUILD_TYPE="$(TARGET_BUILD_VARIANT)" \
 			TARGET_BUILD_FLAVOR="$(TARGET_BUILD_FLAVOR)" \
 			TARGET_DEVICE="$(TARGET_VENDOR_DEVICE_NAME)" \
-			CM_DEVICE="$(TARGET_DEVICE)" \
+			AOKP_DEVICE="$(TARGET_DEVICE)" \
 			PRODUCT_NAME="$(TARGET_VENDOR_PRODUCT_NAME)" \
 			PRODUCT_BRAND="$(PRODUCT_BRAND)" \
 			PRODUCT_DEFAULT_LOCALE="$(call get-default-product-locale,$(PRODUCT_LOCALES))" \
@@ -1017,8 +1019,8 @@ ifneq ($(OTA_PACKAGE_SIGNING_KEY),)
     PRODUCT_EXTRA_RECOVERY_KEYS := $(DEFAULT_SYSTEM_DEV_CERTIFICATE)
 else
     PRODUCT_EXTRA_RECOVERY_KEYS += \
-        build/target/product/security/cm \
-        build/target/product/security/cm-devkey
+        build/target/product/security/aokp \
+        build/target/product/security/aokp-devkey
 endif
 
 # Generate a file containing the keys that will be read by the
@@ -2097,7 +2099,7 @@ endif
 ifeq ($(WITH_GMS),true)
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
 else
-ifneq ($(CM_BUILD),)
+ifneq ($(AOKP_BUILD),)
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
 else
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
@@ -2135,15 +2137,33 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE)
 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
 	   $(BUILT_TARGET_FILES_PACKAGE) $@
 
-CM_TARGET_PACKAGE := $(PRODUCT_OUT)/cm-$(CM_VERSION).zip
+AOKP_TARGET_PACKAGE := $(PRODUCT_OUT)/$(AOKP_VERSION).zip
+AOKP_TARGET_PACKAGE_FOLDER := $(PRODUCT_OUT)
 
-.PHONY: otapackage bacon
+.PHONY: otapackage bacon rainbowfarts
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
-bacon: otapackage
-	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(CM_TARGET_PACKAGE)
-	$(hide) $(MD5SUM) $(CM_TARGET_PACKAGE) > $(CM_TARGET_PACKAGE).md5sum
-	@echo "Package Complete: $(CM_TARGET_PACKAGE)"
 
+bacon: otapackage
+	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(AOKP_TARGET_PACKAGE)
+	$(hide) $(MD5SUM) $(AOKP_TARGET_PACKAGE) > $(AOKP_TARGET_PACKAGE).md5sum
+rainbowfarts: bacon
+	@echo -e ""
+	@echo "============================================================================"
+	@echo "                    ______""  _____""   __  __""   _____"
+	@echo "                   /\\\\  _  \\\\""/\\\\  __\`\\\\""/\\\\ \\\\/\\\\ \\\\"" /\\\\  _ \`\\\\"
+	@echo "                   \\\\ \\\\ \\\\L\\\\ \\\\"" \\\\ \\\\/\\\\ \\\\"" \\\\ \\\\/'/'""\\\\ \\\\ \\\\L\\\\ \\\\"
+	@echo "                    \\\\ \\\\  __ \\\\"" \\\\ \\\\ \\\\ \\\\"" \\\\ , <""  \\\\ \\\\ ,__/"}
+	@echo "                     \\\\ \\\\ \\\\/\\\\ \\\\"" \\\\ \\\\_\\\\ \\\\"" \\\\ \\\\\\\\\`\\\\"" \\\\ \\\\ \\\\/"
+	@echo "                      \\\\ \\\\_\\\\ \\\\_\\\\"" \\\\_____\\\\"" \\\\_\\\\ \\\\_\\\\""\\\\ \\\\_\\\\"
+	@echo "                       \\\\/_/\\\\/_/""\\\\/_____/""\\\\/_/\\\\/_/"" \\\\/_/"
+	@echo -e ""
+	@echo "=============================-Package complete-============================="
+	@echo "Folder : " $(AOKP_TARGET_PACKAGE_FOLDER)
+	@echo "ZipName: " $(subst $(AOKP_TARGET_PACKAGE_FOLDER)/,,$(AOKP_TARGET_PACKAGE))
+	@echo "MD5    : "" $(shell cat $(AOKP_TARGET_PACKAGE).md5sum | awk '{print $$1}')"
+	@echo "Size   : "" $(shell du -hs $(AOKP_TARGET_PACKAGE) | awk '{print $$1}')"
+	@echo "============================================================================"
+	@echo -e ""
 endif    # build_ota_package
 # -----------------------------------------------------------------
 # The factory package

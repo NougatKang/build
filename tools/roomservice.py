@@ -51,7 +51,7 @@ except:
     device = product
 
 if not depsonly:
-    print("Device %s not found. Attempting to retrieve device repository from CyanogenMod Github (http://github.com/CyanogenMod)." % device)
+    print("Device %s not found. Attempting to retrieve device repository from AOKP Github (http://github.com/AOKP)." % device)
 
 repositories = []
 
@@ -71,7 +71,7 @@ def add_auth(githubreq):
         githubreq.add_header("Authorization","Basic %s" % githubauth)
 
 if not depsonly:
-    githubreq = urllib.request.Request("https://api.github.com/search/repositories?q=%s+user:CyanogenMod+in:name+fork:true" % device)
+    githubreq = urllib.request.Request("https://api.github.com/search/repositories?q=%s+user:AOKP+in:name+fork:true" % device)
     add_auth(githubreq)
     try:
         result = json.loads(urllib.request.urlopen(githubreq).read().decode())
@@ -123,7 +123,7 @@ def get_from_manifest(devicename):
         lm = ElementTree.Element("manifest")
 
     for localpath in lm.findall("project"):
-        if re.search("android_device_.*_%s$" % device, localpath.get("name")):
+        if re.search("device_.*_%s$" % device, localpath.get("name")):
             return localpath.get("path")
 
     # Devices originally from AOSP are in the main manifest...
@@ -134,7 +134,7 @@ def get_from_manifest(devicename):
         mm = ElementTree.Element("manifest")
 
     for localpath in mm.findall("project"):
-        if re.search("android_device_.*_%s$" % device, localpath.get("name")):
+        if re.search("device_.*_%s$" % device, localpath.get("name")):
             return localpath.get("path")
 
     return None
@@ -175,12 +175,12 @@ def add_to_manifest(repositories, fallback_branch = None):
         repo_target = repository['target_path']
         print('Checking if %s is fetched from %s' % (repo_target, repo_name))
         if is_in_manifest(repo_target):
-            print('CyanogenMod/%s already fetched to %s' % (repo_name, repo_target))
+            print('AOKP/%s already fetched to %s' % (repo_name, repo_target))
             continue
 
-        print('Adding dependency: CyanogenMod/%s -> %s' % (repo_name, repo_target))
+        print('Adding dependency: AOKP/%s -> %s' % (repo_name, repo_target))
         project = ElementTree.Element("project", attrib = { "path": repo_target,
-            "remote": "github", "name": "CyanogenMod/%s" % repo_name })
+            "remote": "github", "name": "AOKP/%s" % repo_name })
 
         if 'branch' in repository:
             project.set('revision',repository['branch'])
@@ -245,11 +245,11 @@ if depsonly:
 else:
     for repository in repositories:
         repo_name = repository['name']
-        if repo_name.startswith("android_device_") and repo_name.endswith("_" + device):
+        if repo_name.startswith("device_") and repo_name.endswith("_" + device):
             print("Found repository: %s" % repository['name'])
-            
-            manufacturer = repo_name.replace("android_device_", "").replace("_" + device, "")
-            
+
+            manufacturer = repo_name.replace("device_", "").replace("_" + device, "")
+
             default_revision = get_default_revision()
             print("Default revision: %s" % default_revision)
             print("Checking branch info")
@@ -262,10 +262,10 @@ else:
                 githubreq = urllib.request.Request(repository['tags_url'].replace('{/tag}', ''))
                 add_auth(githubreq)
                 result.extend (json.loads(urllib.request.urlopen(githubreq).read().decode()))
-            
+
             repo_path = "device/%s/%s" % (manufacturer, device)
             adding = {'repository':repo_name,'target_path':repo_path}
-            
+
             fallback_branch = None
             if not has_branch(result, default_revision):
                 if os.getenv('ROOMSERVICE_BRANCHES'):
@@ -294,4 +294,4 @@ else:
             print("Done")
             sys.exit()
 
-print("Repository for %s not found in the CyanogenMod Github repository list. If this is in error, you may need to manually add it to your local_manifests/roomservice.xml." % device)
+print("Repository for %s not found in the AOKP Github repository list. If this is in error, you may need to manually add it to your local_manifests/roomservice.xml." % device)
